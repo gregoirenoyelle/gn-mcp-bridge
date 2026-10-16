@@ -24,7 +24,7 @@ class UpdatePostAbility {
 	public static function register() {
 		wp_register_ability( 'gn-mcp/update-post', array(
 			'label'               => __( 'Update Post', 'gn-mcp-bridge' ),
-			'description'         => __( 'Update an existing post (title, content, excerpt, status, categories, tags).', 'gn-mcp-bridge' ),
+			'description'         => __( 'Update an existing post (title, content, excerpt, status, categories, tags, template).', 'gn-mcp-bridge' ),
 			'category'            => 'gn-mcp',
 			'execute_callback'    => array( static::class, 'execute' ),
 			'permission_callback' => array( static::class, 'check_permission' ),
@@ -72,6 +72,10 @@ class UpdatePostAbility {
 						'enum'        => array( 'open', 'closed' ),
 						'description' => 'Whether pingbacks/trackbacks are allowed on this post.',
 					),
+					'template'       => array(
+						'type'        => 'string',
+						'description' => 'Single template slug for this post (e.g. a theme.json customTemplates name). Must be one of the templates the active theme offers for the post type; "" resets to the default template. An invalid slug is refused with the list of valid values.',
+					),
 				),
 			),
 			'output_schema'       => array(
@@ -83,6 +87,7 @@ class UpdatePostAbility {
 					'status'         => array( 'type' => 'string' ),
 					'comment_status' => array( 'type' => 'string' ),
 					'ping_status'    => array( 'type' => 'string' ),
+					'template'       => array( 'type' => 'string' ),
 				),
 			),
 			'meta'                => array( 'show_in_rest' => true ),
@@ -142,6 +147,7 @@ class UpdatePostAbility {
 	 *              HTML are sanitized and re-escaped instead of the whole block
 	 *              comment being HTML-encoded.
 	 * @since 1.4.4 Added optional `comment_status`/`ping_status`.
+	 * @since 1.7.0 Added optional `template`, validated by `PostTemplate::resolve()`.
 	 * @param array $args Input arguments.
 	 * @return array|\WP_Error Updated post data or error.
 	 */
@@ -197,6 +203,16 @@ class UpdatePostAbility {
 			$update['ping_status'] = $args['ping_status'];
 		}
 
+		if ( array_key_exists( 'template', $args ) ) {
+			$template = \GN\McpBridge\PostTemplate::resolve( $args['template'], get_post_type( $post ) );
+
+			if ( is_wp_error( $template ) ) {
+				return $template;
+			}
+
+			$update['page_template'] = $template;
+		}
+
 		$result = wp_update_post( $update, true );
 
 		if ( is_wp_error( $result ) ) {
@@ -219,6 +235,7 @@ class UpdatePostAbility {
 			'status'         => get_post_status( $post_id ),
 			'comment_status' => get_post_field( 'comment_status', $post_id ),
 			'ping_status'    => get_post_field( 'ping_status', $post_id ),
+			'template'       => \GN\McpBridge\PostTemplate::current( $post_id ),
 		);
 	}
 

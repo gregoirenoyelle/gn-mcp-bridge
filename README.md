@@ -94,6 +94,8 @@ Twelve abilities, exposed as MCP tools on the `gn-mcp` server: `search-posts`, `
 
 `get-post-outline` + `get-block` + `update-block` are a targeted read/write path for long posts: an outline (block tree summary, well under the MCP output limit) instead of the full `get-post` content, then one block's raw markup, then a `replace`/`insert_before`/`insert_after`/`delete` write that splices only that block's byte range — `update-post`'s whole-`post_content` replace stays the right tool for short posts or a full rewrite.
 
+`create-post` and `update-post` also take an optional `template` (a post's single template, e.g. a theme.json `customTemplates` slug), validated against the templates the active theme offers for that post type — `_wp_page_template` itself stays protected meta, out of `update-post-meta`'s reach.
+
 Full reference (input/output schemas, default capabilities, notes): [`docs/mcp-abilities.md`](docs/mcp-abilities.md).
 
 Endpoint: `/wp-json/gn-mcp/mcp`.

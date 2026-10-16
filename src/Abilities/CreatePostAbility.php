@@ -74,6 +74,10 @@ class CreatePostAbility {
 						'enum'        => array( 'open', 'closed' ),
 						'description' => 'Whether pingbacks/trackbacks are allowed on this post. Defaults to the site\'s default_ping_status.',
 					),
+					'template'       => array(
+						'type'        => 'string',
+						'description' => 'Single template slug for this post (e.g. a theme.json customTemplates name). Must be one of the templates the active theme offers for the post type; "" means the default template. An invalid slug is refused with the list of valid values.',
+					),
 				),
 			),
 			'output_schema'       => array(
@@ -85,6 +89,7 @@ class CreatePostAbility {
 					'status'         => array( 'type' => 'string' ),
 					'comment_status' => array( 'type' => 'string' ),
 					'ping_status'    => array( 'type' => 'string' ),
+					'template'       => array( 'type' => 'string' ),
 				),
 			),
 			'meta'                => array( 'show_in_rest' => true ),
@@ -146,6 +151,7 @@ class CreatePostAbility {
 	 *              HTML are sanitized and re-escaped instead of the whole block
 	 *              comment being HTML-encoded.
 	 * @since 1.4.4 Added optional `comment_status`/`ping_status`.
+	 * @since 1.7.0 Added optional `template`, validated by `PostTemplate::resolve()`.
 	 * @param array $args Input arguments.
 	 * @return array|\WP_Error Created post data or error.
 	 */
@@ -184,6 +190,16 @@ class CreatePostAbility {
 			$post_data['ping_status'] = $args['ping_status'];
 		}
 
+		if ( array_key_exists( 'template', $args ) ) {
+			$template = \GN\McpBridge\PostTemplate::resolve( $args['template'], $post_type );
+
+			if ( is_wp_error( $template ) ) {
+				return $template;
+			}
+
+			$post_data['page_template'] = $template;
+		}
+
 		$post_id = wp_insert_post( $post_data, true );
 
 		if ( is_wp_error( $post_id ) ) {
@@ -206,6 +222,7 @@ class CreatePostAbility {
 			'status'         => get_post_status( $post_id ),
 			'comment_status' => get_post_field( 'comment_status', $post_id ),
 			'ping_status'    => get_post_field( 'ping_status', $post_id ),
+			'template'       => \GN\McpBridge\PostTemplate::current( $post_id ),
 		);
 	}
 

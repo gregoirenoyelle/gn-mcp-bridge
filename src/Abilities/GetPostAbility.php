@@ -60,6 +60,7 @@ class GetPostAbility {
 					'status'     => array( 'type' => 'string' ),
 					'comment_status' => array( 'type' => 'string' ),
 					'ping_status'    => array( 'type' => 'string' ),
+					'template'       => array( 'type' => 'string' ),
 				),
 			),
 			'meta'                => array( 'show_in_rest' => true ),
@@ -81,6 +82,7 @@ class GetPostAbility {
 	 *
 	 * @since 1.0.0
 	 * @since 1.4.4 Added `comment_status`/`ping_status` to the returned data.
+	 * @since 1.7.0 Added `template` (current single template slug, '' for default).
 	 * @param array $args Input arguments: id or slug, post_type.
 	 * @return array|\WP_Error Post data or error.
 	 */
@@ -124,6 +126,7 @@ class GetPostAbility {
 			'status'         => $post->post_status,
 			'comment_status' => $post->comment_status,
 			'ping_status'    => $post->ping_status,
+			'template'       => \GN\McpBridge\PostTemplate::current( $post ),
 		);
 	}
 }

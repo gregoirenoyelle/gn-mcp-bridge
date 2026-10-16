@@ -94,6 +94,8 @@ Douze abilities, exposées comme tools MCP sur le serveur `gn-mcp` : `search-pos
 
 `get-post-outline` + `get-block` + `update-block` forment un chemin de lecture/écriture ciblé pour les articles longs : un outline (résumé de l'arbre de blocs, bien en dessous de la limite de sortie MCP) au lieu du contenu complet de `get-post`, puis le markup brut d'un bloc, puis une écriture `replace`/`insert_before`/`insert_after`/`delete` qui ne modifie que la plage d'octets de ce bloc — `update-post` (remplacement complet de `post_content`) reste le bon outil pour les articles courts ou une réécriture totale.
 
+`create-post` et `update-post` acceptent aussi un `template` optionnel (le modèle de single d'un article, ex. un slug de `customTemplates` de theme.json), validé contre les modèles que le thème actif propose pour ce type de contenu — `_wp_page_template` reste une meta protégée, hors de portée d'`update-post-meta`.
+
 Référence complète (schémas d'entrée/sortie, capacités par défaut, notes) : [`docs/fr/mcp-abilities.md`](mcp-abilities.md).
 
 Endpoint : `/wp-json/gn-mcp/mcp`.

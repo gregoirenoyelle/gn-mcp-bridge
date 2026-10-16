@@ -80,7 +80,7 @@ L'Abilities API (native) permet seulement d'*enregistrer* des capacités — ell
 
 `mcp-adapter` est de la pure plomberie protocole. Il n'enregistre aucune ability, ne définit aucun contenu, ne prend aucune décision de politique par site — donné zéro ability, il n'expose zéro tool. Ce plugin est la couche qui lui donne réellement quelque chose à servir, plus la politique par site dont `mcp-adapter` lui-même n'a aucune notion :
 
-1. **Enregistre les abilities réelles** — `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, `update-post-meta`, `list-categories` (voir [`docs/fr/mcp-abilities.md`](mcp-abilities.md)) : la logique WordPress concrète, la sanitization, les schémas.
+1. **Enregistre les abilities réelles** — `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, `update-post-meta`, `list-categories`, `update-term` (voir [`docs/fr/mcp-abilities.md`](mcp-abilities.md)) : la logique WordPress concrète, la sanitization, les schémas.
 2. **Déclare un serveur `gn-mcp` dédié** plutôt que de s'appuyer sur le serveur par défaut auto-créé par `mcp-adapter` — `Server.php` désactive explicitement ce défaut (filtre `mcp_adapter_create_default_server`) pour éviter une seconde surface non maîtrisée.
 3. **Fournit les cinq filtres par site** (`gn_mcp_bridge_exposed_abilities`, `gn_mcp_bridge_ability_capability`, `gn_mcp_bridge_transport_capability`, `gn_mcp_bridge_meta_key_allowed`, `gn_mcp_bridge_allowed_post_types`, ci-dessous) — `mcp-adapter` ne fait qu'appliquer le `permission_callback` qu'on lui donne ; il n'a aucun système de filtres propre pour ajuster l'exposition ou les capacités par site.
 
@@ -90,7 +90,7 @@ En bref : sans `mcp-adapter`, ce plugin ne peut rien exposer (dépendance strict
 
 ## Ce qui est exposé
 
-Onze abilities, exposées comme tools MCP sur le serveur `gn-mcp` : `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, `update-post-meta`, `list-categories`.
+Douze abilities, exposées comme tools MCP sur le serveur `gn-mcp` : `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, `update-post-meta`, `list-categories`, `update-term`.
 
 `get-post-outline` + `get-block` + `update-block` forment un chemin de lecture/écriture ciblé pour les articles longs : un outline (résumé de l'arbre de blocs, bien en dessous de la limite de sortie MCP) au lieu du contenu complet de `get-post`, puis le markup brut d'un bloc, puis une écriture `replace`/`insert_before`/`insert_after`/`delete` qui ne modifie que la plage d'octets de ce bloc — `update-post` (remplacement complet de `post_content`) reste le bon outil pour les articles courts ou une réécriture totale.
 
@@ -221,7 +221,7 @@ Convention de nommage : identique à Claude Code, `wp-mcp-[nom-court-du-site]`.
 | `gn_mcp_bridge_ability_capability( $capability, $ability_name )` | Capacité WordPress requise pour exécuter une ability |
 | `gn_mcp_bridge_transport_capability` | Capacité requise pour atteindre l'endpoint, tout court |
 | `gn_mcp_bridge_meta_key_allowed( $allowed, $key )` | Quelles clés de meta `get-post-meta`/`update-post-meta` peuvent lire/écrire |
-| `gn_mcp_bridge_allowed_post_types` | Sur quels types de contenu les abilities CRUD peuvent opérer (défaut `post`, `page`, et `wp_block`) |
+| `gn_mcp_bridge_allowed_post_types` | Sur quels types de contenu les abilities CRUD peuvent opérer (défaut `post`, `page`, et `wp_block`, plus `wp_navigation` pour les utilisateurs ayant `edit_theme_options`) |
 
 Référence complète avec exemples pour chacun : [`CLAUDE.md`](../../CLAUDE.md).
 

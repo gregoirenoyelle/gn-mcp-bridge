@@ -34,6 +34,7 @@ class Config {
 		'gn-mcp/get-post-meta'    => 'edit_posts',
 		'gn-mcp/update-post-meta' => 'edit_posts',
 		'gn-mcp/list-categories'  => 'read',
+		'gn-mcp/update-term'      => 'manage_options',
 	);
 
 	/**
@@ -165,6 +166,7 @@ class Config {
 	 *
 	 * @since 1.2.0
 	 * @since 1.4.0 Added `wp_block` to the default.
+	 * @since 1.6.0 Added `wp_navigation` to the default, for users with `edit_theme_options` only.
 	 * @return string[] Allowed post type slugs.
 	 */
 	public static function allowed_post_types() {
@@ -178,8 +180,15 @@ class Config {
 		 *     } );
 		 *
 		 * @since 1.2.0
-		 * @param string[] $post_types Default allowed post types (`array( 'post', 'page', 'wp_block' )`).
+		 * @param string[] $post_types Default allowed post types (`post`, `page`, `wp_block`, plus `wp_navigation` for users with `edit_theme_options`).
 		 */
-		return apply_filters( 'gn_mcp_bridge_allowed_post_types', array( 'post', 'page', 'wp_block' ) );
+		$post_types = array( 'post', 'page', 'wp_block' );
+
+		// Navigation menus are site-wide theme settings: only users who can edit theme options (admins) reach them.
+		if ( current_user_can( 'edit_theme_options' ) ) {
+			$post_types[] = 'wp_navigation';
+		}
+
+		return apply_filters( 'gn_mcp_bridge_allowed_post_types', $post_types );
 	}
 }

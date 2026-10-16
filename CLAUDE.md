@@ -42,7 +42,8 @@ gn-mcp-bridge/
         ├── DeletePostAbility.php      ← gn-mcp/delete-post
         ├── GetPostMetaAbility.php     ← gn-mcp/get-post-meta
         ├── UpdatePostMetaAbility.php  ← gn-mcp/update-post-meta
-        └── ListCategoriesAbility.php  ← gn-mcp/list-categories
+        ├── ListCategoriesAbility.php  ← gn-mcp/list-categories
+        └── UpdateTermAbility.php      ← gn-mcp/update-term (default capability manage_options)
 ```
 
 ## Required plugins
@@ -122,7 +123,7 @@ add_filter( 'gn_mcp_bridge_meta_key_allowed', function( $allowed, $key ) {
 
 ### `gn_mcp_bridge_allowed_post_types`
 
-Which post types `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, and `update-post-meta` may operate on. Defaults to `post`, `page`, and `wp_block` — abilities stay generic across every site, a given site opts a CPT in explicitly.
+Which post types `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, and `update-post-meta` may operate on. Defaults to `post`, `page`, and `wp_block`, plus `wp_navigation` for users with `edit_theme_options` (admins) — abilities stay generic across every site, a given site opts a CPT in explicitly.
 
 ```php
 add_filter( 'gn_mcp_bridge_allowed_post_types', function( array $post_types ) {
@@ -146,6 +147,16 @@ A CPT-specific ability (e.g. hardcoding `recipe`-only fields not covered by the 
 - Test pure logic (`Config`, `BlockLocator`) directly. Don't reference the `Server` class from a test: `src/Server.php` registers hooks at file scope (`add_filter`/`add_action` outside any function), so autoloading it needs the isolated `setUpBeforeClass()` Monkey cycle (see the `gns-wordpress-cicd` skill's `file-scope-hooks-detection.md`).
 - Never load `gn-mcp-bridge.php` from tests — it exits on the `ABSPATH` guard and also registers hooks at file scope.
 - A new ability's `execute()` logic that can be unit-tested should get a `tests/Unit/<Name>Test.php` alongside it.
+
+## Repositories and releases
+
+Split repos: `gregoirenoyelle/gn-mcp-bridge-source` (private — this repo, full history, tests, CI) publishes to `gregoirenoyelle/gn-mcp-bridge` (public — shipped files only). Work on `dev`; never commit to the public repo directly, `release.yml` overwrites it (`rsync --delete`) on every release.
+
+1. Bump `Version:` in `gn-mcp-bridge.php`, merge `dev` into `main`.
+2. Tag on `main` and push the tag (`git tag X.Y.Z && git push origin X.Y.Z`) — `release.yml` refuses a tag not on `main`, or one that doesn't match the `Version:` header.
+3. A dry run (`gh workflow run release.yml --ref main -f tag=X.Y.Z -f dry_run=true`) shows the staged tree and the diff against the public repo without pushing.
+
+Everything outside the `rsync` exclude list in `release.yml` ships publicly — including `CLAUDE.md` and `.claude/` (on purpose, the bundled skills must travel). Never put real logins, hostnames, or credentials in any shipped file. The deploy key is `DIST_REPO_DEPLOY_KEY` on the source repo (1Password `Dev` → `GitHub_Deploy_Key_gn_mcp_bridge`).
 
 ## French documentation
 

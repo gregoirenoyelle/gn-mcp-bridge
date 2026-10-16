@@ -11,7 +11,7 @@
  * Plugin Name: GN MCP Bridge
  * Plugin URI:  https://www.gregoirenoyelle.com/
  * Description: Exposes WordPress content abilities as an MCP server for Claude Code, with per-role capability filters. To adjust what's exposed and for whom, open a Claude Code session in this plugin's folder and run /gnmcp-setup-site.
- * Version:     1.5.1
+ * Version:     1.6.0
  * Author:      Gregoire Noyelle
  * Author URI:  https://www.gregoirenoyelle.com/
  * License:     GPL-2.0-or-later
@@ -42,6 +42,7 @@ use GN\McpBridge\Abilities\DeletePostAbility;
 use GN\McpBridge\Abilities\GetPostMetaAbility;
 use GN\McpBridge\Abilities\UpdatePostMetaAbility;
 use GN\McpBridge\Abilities\ListCategoriesAbility;
+use GN\McpBridge\Abilities\UpdateTermAbility;
 
 /**
  * Register the gn-mcp ability category.
@@ -74,6 +75,7 @@ function register_abilities() {
 	GetPostMetaAbility::register();
 	UpdatePostMetaAbility::register();
 	ListCategoriesAbility::register();
+	UpdateTermAbility::register();
 }
 
 /**

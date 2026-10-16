@@ -228,12 +228,25 @@ Liste les catégories d'articles existantes avec leur nombre d'articles.
 
 **Notes** : inclut les catégories vides (`hide_empty: false`). Reste délibérément au défaut `read` — les nombres d'articles par terme ne comptent que les articles au statut `publish`, donc aucune fuite de contenu brouillon/privé ne justifierait de le relever comme pour `get-post`.
 
+## `gn-mcp/update-term`
+
+Met à jour le nom et/ou la description d'un terme de taxonomie existant (catégorie, étiquette...), trouvé par ID ou par slug.
+
+- **Capacité par défaut** : `manage_options` (administrateurs uniquement)
+- **Source** : `src/Abilities/UpdateTermAbility.php`
+
+**Entrée** : `taxonomy` (défaut `category`), `id` ou `slug` (l'ID l'emporte si les deux sont fournis), `name`, `description`
+
+**Sortie** : `id`, `taxonomy`, `slug`, `name`, `description`, `previous_description`, `url`
+
+**Notes** : au moins un des champs `name`/`description` est requis ; une `description` vide l'efface. Une vérification `edit_term` par terme s'exécute après celle de l'ability, donc le mapping de capacités propre à la taxonomie s'applique toujours. La description passe par le filtre `pre_term_description` du cœur (kses pour un appelant sans `unfiltered_html`). Avec Polylang, chaque langue a son propre terme, slug et ID — les mettre à jour séparément.
+
 ## Les niveaux de capacité, en un coup d'œil
 
 1. **Transport** — `gn_mcp_bridge_transport_capability` (défaut `read`) : requis juste pour atteindre `/wp-json/gn-mcp/mcp`, vérifié avant toute exécution d'ability.
 2. **Exposition** — `gn_mcp_bridge_exposed_abilities` : lesquelles des abilities ci-dessus sont même listées sur le serveur `gn-mcp` de ce site. Une ability filtrée ici est invisible pour les clients MCP, quelle que soit la capacité.
 3. **Capacité par ability** — `gn_mcp_bridge_ability_capability( $capability, $ability_name )` : la capacité WordPress précise requise pour exécuter une ability donnée (valeurs par défaut dans `Config::DEFAULT_CAPABILITIES`, indiquées ci-dessus).
 4. **Liste blanche des meta** — `gn_mcp_bridge_meta_key_allowed( $allowed, $key )` : pour `get-post-meta`/`update-post-meta` uniquement, quelles clés de meta individuelles peuvent être lues/écrites, indépendamment de la capacité par ability ci-dessus (exclut par défaut les clés protégées par WordPress).
-5. **Liste blanche des types de contenu** — `gn_mcp_bridge_allowed_post_types` : sur quels types de contenu `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta` et `update-post-meta` peuvent opérer (défaut `post`, `page`, et `wp_block`).
+5. **Liste blanche des types de contenu** — `gn_mcp_bridge_allowed_post_types` : sur quels types de contenu `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta` et `update-post-meta` peuvent opérer (défaut `post`, `page`, et `wp_block`, plus `wp_navigation` pour les utilisateurs ayant `edit_theme_options`).
 
 Les cinq sont définis depuis le thème consommateur (voir la section « Réglages par site » de `README.md` et `CLAUDE.md` pour des exemples de filtres) — jamais en modifiant ce plugin.

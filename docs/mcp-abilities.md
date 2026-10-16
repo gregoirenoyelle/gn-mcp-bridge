@@ -228,12 +228,25 @@ List existing post categories with their post counts.
 
 **Notes**: includes empty categories (`hide_empty: false`). Stays at the `read` default deliberately — term post counts are computed only from `publish`-status posts, so this carries no draft/private-content leak that would justify raising it alongside `get-post`.
 
+## `gn-mcp/update-term`
+
+Update the name and/or description of an existing taxonomy term (category, tag...), found by ID or slug.
+
+- **Default capability**: `manage_options` (admins only)
+- **Source**: `src/Abilities/UpdateTermAbility.php`
+
+**Input**: `taxonomy` (default `category`), `id` or `slug` (ID wins when both are given), `name`, `description`
+
+**Output**: `id`, `taxonomy`, `slug`, `name`, `description`, `previous_description`, `url`
+
+**Notes**: at least one of `name`/`description` is required; an empty `description` clears it. A per-term `edit_term` check runs after the ability-level one, so the taxonomy's own capability mapping still applies. The description goes through core's `pre_term_description` filter (kses for callers without `unfiltered_html`). With Polylang, each language's term has its own slug and ID — update each one separately.
+
 ## Capability layers, at a glance
 
 1. **Transport** — `gn_mcp_bridge_transport_capability` (default `read`): required just to reach `/wp-json/gn-mcp/mcp` at all, checked before any ability runs.
 2. **Exposure** — `gn_mcp_bridge_exposed_abilities`: which of the abilities above are even listed on this site's `gn-mcp` server. An ability filtered out here is invisible to MCP clients, regardless of capability.
 3. **Per-ability capability** — `gn_mcp_bridge_ability_capability( $capability, $ability_name )`: the specific WordPress capability a user needs to run one given ability (defaults from `Config::DEFAULT_CAPABILITIES`, shown above).
 4. **Meta key allowlist** — `gn_mcp_bridge_meta_key_allowed( $allowed, $key )`: for `get-post-meta`/`update-post-meta` only, which individual meta keys may be read/written regardless of the ability-level capability above (defaults to excluding WordPress-protected keys).
-5. **Post type allowlist** — `gn_mcp_bridge_allowed_post_types`: which post types `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, and `update-post-meta` may operate on (defaults to `post`, `page`, and `wp_block`).
+5. **Post type allowlist** — `gn_mcp_bridge_allowed_post_types`: which post types `search-posts`, `get-post`, `get-post-outline`, `get-block`, `create-post`, `update-post`, `update-block`, `delete-post`, `get-post-meta`, and `update-post-meta` may operate on (defaults to `post`, `page`, and `wp_block`, plus `wp_navigation` for users with `edit_theme_options`).
 
 All five are set from the consuming theme (see `README.md`'s "Per-site settings" section and `CLAUDE.md` for filter examples) — never by editing this plugin.

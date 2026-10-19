@@ -1,6 +1,6 @@
 ---
 name: gnmcp-setup-site
-description: Interactive per-site configuration for gn-mcp-bridge — writes to the theme (inc/core/mcp-abilities.php filter file), not the plugin. Detects the active theme and manages the Application Password for the target WordPress account; abilities/capability/meta-key/post-type filters are added on explicit dev request, not asked interactively (devs, not end users, use this). Trigger keywords: configure gn-mcp-bridge, set up MCP for this site, who can use MCP, gn-mcp-bridge per-site settings.
+description: "Interactive per-site configuration for gn-mcp-bridge — writes to the theme (inc/core/mcp-abilities.php filter file), not the plugin. Detects the active theme and manages the Application Password for the target WordPress account; abilities/capability/meta-key/post-type filters are added on explicit dev request, not asked interactively (devs, not end users, use this). Trigger keywords: configure gn-mcp-bridge, set up MCP for this site, who can use MCP, gn-mcp-bridge per-site settings."
 user-invocable: true
 ---
 
@@ -126,6 +126,32 @@ claude mcp add --transport http <name> "https://<site>.test/wp-json/gn-mcp/mcp" 
 ```
 
 A server added mid-session needs a session restart (or `/mcp`) before its tools appear — see `gnmcp-check` step 5. If it was added with `local` scope and doesn't show up in a later session, check whether that session started in the same project directory — see `README.md` / `CLAUDE.md`'s note on launching from this plugin's folder.
+
+## Step 10 — Hand over the credentials (always, unprompted)
+
+End every run with this summary — never wait for the dev to ask for it. WordPress stores only a hash of an Application Password, so this is the one moment the raw value can be shown; afterwards it can only be dug out of the client config.
+
+Get the UUID of the password created in Step 7 (skip if an existing password was reused and its raw value isn't known — say so in the table instead):
+
+```bash
+wp user application-password list <login> --name="<password name>" --fields=uuid,name,created --path=<site>
+```
+
+Then print, in the chat only, this exact plain list inside a `text` code block (a list rendered as Markdown loses its `- ` bullets when copied out of a terminal; the dev pastes it as-is into a password-manager note):
+
+```text
+- Site: https://<site>
+- Login: <login>
+- pswd: <application-password>
+- Name: <password name>
+- UUID: <uuid>
+- MCP endpoint: https://<site>/wp-json/gn-mcp/mcp
+- Claude Code server: <name> (scope <local|user>)
+```
+
+No table. If Step 9 was skipped, write `not registered` as the server value.
+
+Follow it with one line telling the dev where to keep it: a local `.test` throwaway account → their own site notes are enough; a production or client account → their password manager. The rule from Step 7 still applies — this list goes in the chat, never in a committed file.
 
 ## Related
 

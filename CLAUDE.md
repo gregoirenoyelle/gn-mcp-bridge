@@ -25,13 +25,14 @@ gn-mcp-bridge/
 ├── tests/
 │   ├── bootstrap.php               ← Loads vendor/autoload.php + Stubs/WP_Error.php
 │   ├── Stubs/WP_Error.php          ← Minimal WP_Error (Brain Monkey mocks functions, not classes)
-│   └── Unit/                       ← ConfigTest, BlockLocatorTest, PostTemplateTest
+│   └── Unit/                       ← ConfigTest, BlockLocatorTest, PostTemplateTest, AdapterSourceTest
 └── src/
     ├── autoload.php                ← PSR-4: GN\McpBridge\ → src/
     ├── Config.php                  ← Filterable settings (exposed abilities, capabilities)
     ├── Server.php                  ← Declares the gn-mcp MCP server (mcp_adapter_init)
     ├── BlockLocator.php            ← Finds/splices blocks in raw post_content by byte offset (used by outline/get-block/update-block)
     ├── PostTemplate.php            ← Validates the `template` input of create-post/update-post against the active theme's templates for the post type
+    ├── AdapterSource.php           ← Detects another plugin's bundled mcp-adapter copy loaded instead of the standalone plugin (admin notice)
     └── Abilities/
         ├── SearchPostsAbility.php     ← gn-mcp/search-posts
         ├── GetPostAbility.php         ← gn-mcp/get-post
@@ -145,7 +146,7 @@ A CPT-specific ability (e.g. hardcoding `recipe`-only fields not covered by the 
 
 `composer test` — pure unit tests, no WordPress install. `config.platform.php` is pinned to `8.2` (= the CI PHP version) so `composer.lock` resolves identically locally and on CI; never raise it above the CI version, and set it before any `composer update`.
 
-- Test pure logic (`Config`, `BlockLocator`, `PostTemplate`) directly. Don't reference the `Server` class from a test: `src/Server.php` registers hooks at file scope (`add_filter`/`add_action` outside any function), so autoloading it needs the isolated `setUpBeforeClass()` Monkey cycle (see the `gns-wordpress-cicd` skill's `file-scope-hooks-detection.md`).
+- Test pure logic (`Config`, `BlockLocator`, `PostTemplate`, `AdapterSource`) directly. Don't reference the `Server` class from a test: `src/Server.php` registers hooks at file scope (`add_filter`/`add_action` outside any function), so autoloading it needs the isolated `setUpBeforeClass()` Monkey cycle (see the `gns-wordpress-cicd` skill's `file-scope-hooks-detection.md`).
 - Never load `gn-mcp-bridge.php` from tests — it exits on the `ABSPATH` guard and also registers hooks at file scope.
 - A new ability's `execute()` logic that can be unit-tested should get a `tests/Unit/<Name>Test.php` alongside it.
 

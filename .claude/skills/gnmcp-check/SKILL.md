@@ -21,6 +21,8 @@ Expect `mcp-adapter` and `gn-mcp-bridge` both `active`, and `/gn-mcp` + `/gn-mcp
 
 If `mcp-adapter` itself is inactive or missing, `gn-mcp-bridge.php`'s own `check_mcp_adapter_dependency()` check should already be showing an admin notice — confirm it's visible in `/wp-admin/plugins.php`.
 
+If the notice says the loaded MCP Adapter is "bundled inside" another plugin, that plugin's `vendor/` copy loaded before `mcp-adapter/` and blocked the standalone one (WP-CLI also logs "Another version of MCP Adapter is already loaded"). Confirm with `wp eval 'echo (new ReflectionClass("WP\\MCP\\Core\\McpAdapter"))->getFileName();' --path=<site>`; the fix is updating or deactivating that plugin, never editing either MCP plugin.
+
 **Gotcha: `mcp-adapter` deactivated via WP-CLI or a hosting panel, after `gn-mcp-bridge` was already active.** The Plugins-page UI blocks this (`Requires Plugins`), but a WP-CLI `wp plugin deactivate mcp-adapter` doesn't — `gn-mcp-bridge` stays "active" while `mcp_adapter_init` silently never fires again, so `Server.php` never re-registers, and the route above goes missing with no error, just a plain `rest_no_route` 404 to any client. The `wp plugin list` check above catches it: `mcp-adapter` will show `inactive` while `gn-mcp-bridge` still shows `active`.
 
 ## 2. Application Password sanity check

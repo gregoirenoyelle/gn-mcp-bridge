@@ -11,7 +11,7 @@
  * Plugin Name: GN MCP Bridge
  * Plugin URI:  https://www.gregoirenoyelle.com/
  * Description: Exposes WordPress content abilities as an MCP server for Claude Code, with per-role capability filters. To adjust what's exposed and for whom, open a Claude Code session in this plugin's folder and run /gnmcp-setup-site.
- * Version:     1.7.0
+ * Version:     1.7.1
  * Author:      Gregoire Noyelle
  * Author URI:  https://www.gregoirenoyelle.com/
  * License:     GPL-2.0-or-later
@@ -31,6 +31,7 @@ define( 'GN_MCP_BRIDGE_URL', plugin_dir_url( __FILE__ ) );
 require_once __DIR__ . '/src/autoload.php';
 require_once __DIR__ . '/src/Server.php';
 
+use GN\McpBridge\AdapterSource;
 use GN\McpBridge\Abilities\SearchPostsAbility;
 use GN\McpBridge\Abilities\GetPostAbility;
 use GN\McpBridge\Abilities\GetPostOutlineAbility;
@@ -91,12 +92,26 @@ const GN_MCP_BRIDGE_MIN_ADAPTER_VERSION = '0.7.0';
  *
  * `Requires Plugins: mcp-adapter` in the header already blocks activation
  * when mcp-adapter is missing, but not: mcp-adapter being deactivated
- * afterward, or an older/incompatible version being active.
+ * afterward, an older/incompatible version being active, or another plugin's
+ * bundled copy loading first and preventing the standalone one from booting.
  *
  * @since 1.0.0
+ * @since 1.7.1 Detects a bundled copy loaded instead of the standalone plugin.
  * @return void
  */
 function check_mcp_adapter_dependency() {
+	$bundled = AdapterSource::bundled_copy();
+
+	if ( null !== $bundled ) {
+		add_action(
+			'admin_notices',
+			function () use ( $bundled ) {
+				notice_mcp_adapter_bundled( $bundled );
+			}
+		);
+		return;
+	}
+
 	if ( ! defined( 'WP_MCP_VERSION' ) ) {
 		add_action( 'admin_notices', __NAMESPACE__ . '\notice_mcp_adapter_missing' );
 		return;
@@ -117,6 +132,43 @@ function notice_mcp_adapter_missing() {
 	printf(
 		'<div class="notice notice-error"><p>%s</p></div>',
 		esc_html__( 'GN MCP Bridge requires the "MCP Adapter" plugin to be installed and active.', 'gn-mcp-bridge' )
+	);
+}
+
+/**
+ * Admin notice: another plugin's bundled mcp-adapter copy is loaded instead of the standalone plugin.
+ *
+ * @since 1.7.1
+ * @param array{file: string, slug: string|null, version: string} $bundled Loaded copy, from AdapterSource::bundled_copy().
+ * @return void
+ */
+function notice_mcp_adapter_bundled( array $bundled ) {
+	$source = $bundled['slug'];
+
+	if ( null !== $source && function_exists( 'get_plugins' ) ) {
+		foreach ( get_plugins() as $plugin_file => $plugin_data ) {
+			if ( 0 === strpos( $plugin_file, $source . '/' ) && ! empty( $plugin_data['Name'] ) ) {
+				$source = $plugin_data['Name'];
+				break;
+			}
+		}
+	}
+
+	if ( null === $source ) {
+		$source = str_replace( ABSPATH, '', $bundled['file'] );
+	}
+
+	printf(
+		'<div class="notice notice-error"><p>%s</p></div>',
+		esc_html(
+			sprintf(
+				/* translators: 1: bundled mcp-adapter version, 2: plugin name (or file path) bundling it, 3: minimum verified version */
+				__( 'GN MCP Bridge: the MCP Adapter loaded on this site is version %1$s, bundled inside "%2$s", not the standalone "MCP Adapter" plugin (which cannot start while this copy is loaded). Update or deactivate "%2$s" so the standalone plugin (%3$s or later) loads instead.', 'gn-mcp-bridge' ),
+				$bundled['version'],
+				$source,
+				GN_MCP_BRIDGE_MIN_ADAPTER_VERSION
+			)
+		)
 	);
 }
 

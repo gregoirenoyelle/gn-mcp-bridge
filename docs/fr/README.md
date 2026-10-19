@@ -151,6 +151,14 @@ Plusieurs entrées MCP dans Claude Code peuvent pointer vers le **même site** a
 - Lancer `/mcp` pour voir les serveurs connectés et confirmer la liste de tools sous celui visé.
 - Nommer explicitement le serveur dans le prompt (ex. « utilise `wp-mcp-gregoirenoyelle-author` pour créer un article ») — quand plusieurs serveurs connectés exposent un tool équivalent, une demande non qualifiée laisse le modèle choisir l'un ou l'autre, ce qui annule l'intérêt d'un test restreint par rôle.
 
+## Configuration client : Claude Code sur l'ordinateur du client
+
+Quand un client utilise lui-même Claude Code : son propre compte Claude, un Application Password par machine, et un serveur MCP actif uniquement dans un dossier de contenu dédié avec son propre `CLAUDE.md`. Deux chemins : l'opérateur configure la machine du client avec le CLI (`--scope local`), ou l'opérateur construit un kit de dossier prêt à l'emploi avec le skill bundlé `gnmcp-client-kit`, que le client décompresse avant d'y lancer `claude`. Le client n'a jamais besoin de SSH : tout passe par HTTPS.
+
+**Le client ne lance jamais Claude Code depuis le dossier de ce plugin**, et n'a jamais de copie du plugin ni du code du site sur sa machine. Ce dossier, c'est la partie dev : il charge automatiquement le `CLAUDE.md` de ce plugin et les skills `gnmcp-*` réservés à l'opérateur (voir « Modèle de sécurité et limites » plus haut).
+
+Guide pas à pas complet : [`client-setup-claude-code.md`](client-setup-claude-code.md).
+
 ## Configuration client : Claude Desktop pour les utilisateurs non techniques
 
 Le flag `--header` de Claude Code (étape 6 ci-dessus) n'a pas d'équivalent dans l'interface de Claude Desktop : **Réglages → Connecteurs** n'accepte que des serveurs MCP distants via OAuth, et refuse tout serveur distant (HTTP/SSE) déclaré directement dans `claude_desktop_config.json`. Il n'existe aucun champ pour un header brut `Authorization: Basic ...`.
@@ -169,11 +177,7 @@ Cette configuration technique est faite **une seule fois, par toi (Grégoire), s
 
    S'il est absent, l'installer d'abord (ex. depuis [nodejs.org](https://nodejs.org) — version LTS).
 
-2. **Générer une Application Password dédiée** pour ce client précis, sur le compte WordPress avec lequel il agira (idéalement avec une capacité "brouillons uniquement" via `gn_mcp_bridge_ability_capability` — voir plus bas) :
-
-   ```bash
-   wp user application-password create <login-client> "Claude Desktop - <nom du client>" --porcelain
-   ```
+2. **Générer une Application Password dédiée** pour ce client précis, sur le compte WordPress avec lequel il agira (idéalement avec une capacité "brouillons uniquement" via `gn_mcp_bridge_ability_capability` — voir plus bas), depuis l'admin WordPress (fonctionne chez n'importe quel hébergeur, sans SSH) : *Utilisateurs → Tous les utilisateurs → modifier l'utilisateur du client → Mots de passe d'application*, le nommer `Claude Desktop - <nom du client>`, cliquer sur **Ajouter un nouveau mot de passe d'application** et le copier (il n'apparaît qu'une fois).
 
 3. **Vérifier le handshake avec `curl`** d'abord (même commande qu'à l'étape 5 de "Installation sur un nouveau site" ci-dessus) — confirmer un `HTTP/2 200` avant de toucher à la configuration de Desktop.
 
@@ -210,7 +214,7 @@ Convention de nommage : identique à Claude Code, `wp-mcp-[nom-court-du-site]`.
 ### Pièges connus
 
 - **Windows** : un bug documenté dans certaines versions de `mcp-remote`/Desktop corrompt les valeurs `--header` contenant des espaces sous Windows. Si le header est silencieusement perdu ou que les requêtes reviennent en `401`, tester une autre méthode de quoting ou chercher une note de version `mcp-remote` à ce sujet avant de suspecter l'Application Password.
-- **L'Application Password se trouve en clair** dans `claude_desktop_config.json` sur la machine du client — même modèle de confiance qu'une clé SSH sur un laptop. Si la machine du client est partagée, perdue, ou que la mission se termine, révoquer cette Application Password précise depuis WordPress (`wp user application-password delete <login-client> <uuid>` ou via son profil utilisateur) plutôt que de faire tourner un identifiant partagé.
+- **L'Application Password se trouve en clair** dans `claude_desktop_config.json` sur la machine du client — même modèle de confiance qu'une clé SSH sur un laptop. Si la machine du client est partagée, perdue, ou que la mission se termine, révoquer cette Application Password précise dans l'admin WordPress (utilisateur du client → *Mots de passe d'application* → **Révoquer**) plutôt que de faire tourner un identifiant partagé.
 - **Ceci contourne entièrement le flux OAuth officiel des Connecteurs.** C'est un pont pragmatique, pas le chemin sanctionné par Anthropic — si Claude Desktop supporte un jour des headers personnalisés nativement dans les Connecteurs, préférer cette solution.
 - Restreindre étroitement le compte de l'Application Password (`gn_mcp_bridge_ability_capability`, brouillons uniquement) — ce canal a plus de chances de finir sur la machine d'une personne non technique que sur ton propre poste de dev, donc l'impact d'un identifiant qui fuite doit être limité par conception.
 - **Un pull de la base locale depuis la prod (`wp-sync-db.sh pull`) efface les Application Passwords locales.** Elles vivent dans `wp_usermeta` (`_application_passwords`), et un pull complet écrase cette table avec celle du serveur distant — tout serveur MCP local enregistré dans `~/.claude.json` se met alors à échouer en `401`, son identifiant stocké ne correspondant plus à rien en base locale. Correctif : définir `MCP_PRESERVE_USERS="<login> <login2>"` dans le `.local-working/wp-sync.conf` du projet — `wp-sync-db.sh` sauvegarde et restaure alors la valeur `_application_passwords` de ces logins autour du pull, ce qui préserve l'identifiant existant sans avoir à le régénérer.
@@ -231,7 +235,7 @@ Référence complète avec exemples pour chacun : [`CLAUDE.md`](../../CLAUDE.md)
 
 ## Ajouter une nouvelle ability
 
-Voir la section "Adding a new ability" dans [`CLAUDE.md`](../../CLAUDE.md). Démarrer Claude Code depuis le dossier de ce plugin pour ce travail — voir la note "Bundled skills" de `CLAUDE.md` pour le pourquoi.
+Voir la section "Adding a new ability" dans [`CLAUDE.md`](../../CLAUDE.md). Démarrer Claude Code depuis le dossier de ce plugin pour ce travail — voir la note "Bundled skills" de `CLAUDE.md` pour le pourquoi. Valable uniquement sur la machine de dev de l'opérateur, jamais sur celle d'un client (voir « Configuration client : Claude Code » plus haut).
 
 ## Développement
 

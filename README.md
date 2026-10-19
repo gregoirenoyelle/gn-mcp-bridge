@@ -144,6 +144,14 @@ Multiple Claude Code MCP entries can point at the **same site** with **different
 - Run `/mcp` to see the connected servers and confirm the tool list under the one you mean.
 - Name the server explicitly in the prompt (e.g. "use `wp-mcp-gregoirenoyelle-author` to create a post") — when multiple connected servers expose an equivalent tool, an unqualified request lets the model pick either one, which defeats the point of a role-restricted test.
 
+## Client setup: Claude Code on the client's computer
+
+When a client uses Claude Code themselves: their own Claude account, an Application Password per machine, and an MCP server active only in a dedicated content folder with its own `CLAUDE.md`. Two paths: the operator sets it up on the client's machine with the CLI (`--scope local`), or the operator builds a ready-made folder kit with the bundled `gnmcp-client-kit` skill and the client just unzips it and runs `claude` inside it. The client never needs SSH: everything goes over HTTPS.
+
+**The client never runs Claude Code from this plugin's folder**, and never has a copy of the plugin or the site's code on their machine. That folder is the dev side: it auto-loads this plugin's `CLAUDE.md` and the operator-only `gnmcp-*` skills (see "Security model & limits" above).
+
+Full step-by-step guide: [`docs/client-setup-claude-code.md`](docs/client-setup-claude-code.md).
+
 ## Client setup: Claude Desktop for non-technical users
 
 Claude Code's `--header` flag (step 6 above) has no equivalent in Claude Desktop's own UI: Desktop's **Settings → Connectors** only accepts remote MCP servers over OAuth, and it refuses any remote (HTTP/SSE) server declared directly in `claude_desktop_config.json`. There is no field for a raw `Authorization: Basic ...` header.
@@ -160,10 +168,7 @@ This is a one-time technical setup **you (Grégoire) do on the client's machine*
    ```
    If missing, install it first (e.g. from [nodejs.org](https://nodejs.org) — LTS version).
 
-2. **Generate a dedicated Application Password** for this specific client, on the WordPress account they'll act as (ideally with a "drafts only" capability via `gn_mcp_bridge_ability_capability` — see below):
-   ```bash
-   wp user application-password create <client-login> "Claude Desktop - <client name>" --porcelain
-   ```
+2. **Generate a dedicated Application Password** for this specific client, on the WordPress account they'll act as (ideally with a "drafts only" capability via `gn_mcp_bridge_ability_capability` — see below), from the WordPress admin (works on any host, no SSH): *Users → All Users → edit the client's user → Application Passwords*, name it `Claude Desktop - <client name>`, click **Add New Application Password** and copy it (shown only once).
 
 3. **Verify the handshake with `curl`** first (same command as step 5 of "Setup on a new site" above) — confirm `HTTP/2 200` before touching Desktop's config.
 
@@ -198,7 +203,7 @@ Naming convention: same as Claude Code, `wp-mcp-[short-site-name]`.
 ### Known gotchas
 
 - **Windows**: a documented bug in some `mcp-remote`/Desktop versions mangles `--header` values containing spaces on Windows. If the header is silently dropped or requests come back `401`, test alternate quoting or check for an `mcp-remote` release note about it before assuming the Application Password is wrong.
-- **The Application Password sits in plaintext** in `claude_desktop_config.json` on the client's machine — same trust model as an SSH key on a laptop. If the client's machine is shared, lost, or the engagement ends, revoke that specific Application Password from WordPress (`wp user application-password delete <client-login> <uuid>` or via their user profile) rather than rotating a shared credential.
+- **The Application Password sits in plaintext** in `claude_desktop_config.json` on the client's machine — same trust model as an SSH key on a laptop. If the client's machine is shared, lost, or the engagement ends, revoke that specific Application Password in the WordPress admin (the client's user → *Application Passwords* → **Revoke**) rather than rotating a shared credential.
 - **This bypasses the official Connectors OAuth flow entirely.** It's a pragmatic bridge, not the sanctioned Anthropic path — if Claude Desktop later supports custom headers natively in Connectors, prefer that instead.
 - Scope the Application Password's account tightly (`gn_mcp_bridge_ability_capability`, drafts-only) — this channel is more likely to end up on a non-technical person's machine than your own dev setup, so the blast radius of a leaked credential should be small by design.
 - **A local DB pull from prod (`wp-sync-db.sh pull`) wipes local Application Passwords.** They live in `wp_usermeta` (`_application_passwords`), and a full DB pull overwrites that table with the remote's — so any local MCP server registered in `~/.claude.json` starts failing with `401` right after, since its stored credential no longer matches anything in the local DB. Fix: set `MCP_PRESERVE_USERS="<login> <login2>"` in that project's `.local-working/wp-sync.conf` — `wp-sync-db.sh` then backs up and restores those logins' `_application_passwords` value around the pull, so the existing credential keeps working with no regeneration needed.
@@ -219,7 +224,7 @@ Full reference with examples for each: [`CLAUDE.md`](./CLAUDE.md).
 
 ## Adding a new ability
 
-See the "Adding a new ability" section in [`CLAUDE.md`](./CLAUDE.md). Start Claude Code from inside this plugin's own folder for that work — see `CLAUDE.md`'s "Bundled skills" note on why.
+See the "Adding a new ability" section in [`CLAUDE.md`](./CLAUDE.md). Start Claude Code from inside this plugin's own folder for that work — see `CLAUDE.md`'s "Bundled skills" note on why. This applies to the operator's dev machine only, never to a client's (see "Client setup: Claude Code" above).
 
 ## Development
 

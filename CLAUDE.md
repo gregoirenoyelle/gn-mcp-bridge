@@ -176,6 +176,7 @@ Self-contained, `gnmcp-` prefixed skills that travel with this plugin when it's 
 |---|---|
 | `gnmcp-add-ability` | Scaffold a new ability in `src/Abilities/` |
 | `gnmcp-setup-site` | Interactive per-site setup — writes to the theme (`inc/core/mcp-abilities.php`), not the plugin: detects the active theme, asks which abilities/capabilities/role, manages the Application Password |
+| `gnmcp-client-kit` | Build a ready-made Claude Code folder for a client's computer (`CLAUDE.md`, `.mcp.json`, permissions, start-up steps) in `.local-working/client-kits/`; its script injects the Application Password, checks the handshake and zips the kit. Operator machine only |
 | `gnmcp-check` | Diagnose a failing MCP connection (curl handshake, `Mcp-Session-Id`, Claude Desktop/`mcp-remote` checks); read-only except when explicitly updating `mcp-adapter` from its wordpress.org zip |
 
 Auto-discovered by Claude Code when the working directory is inside this plugin. Keep this table in sync when a skill is added, renamed, or removed.
@@ -191,6 +192,8 @@ Deliberately **not** bundled here: it's a content-editing workflow, not plugin-s
 Session-opening health check, not a skill — plain slash command, no auto-discovery/auto-trigger. Read-only: checks `mcp-adapter` is active and meets `GN_MCP_BRIDGE_MIN_ADAPTER_VERSION`, `claude mcp list` connection state, and an `initialize` curl handshake, then reports pass/fail. Fixes nothing itself — hands off to `gnmcp-check` on any failure.
 
 **Launch Claude Code from inside this plugin's folder for MCP-bridge work.** Directory-scoped skill discovery means the `gnmcp-*` skills are only discovered when the session starts here — there is no global equivalent to fall back on, so starting elsewhere means they're simply unavailable. Trade-off: some of that work (a site-specific ability like `recipe`, filters in `inc/core/mcp-abilities.php`) belongs in the consuming theme, not here — editing those files by absolute path still works from this cwd, but the theme's own `CLAUDE.md`/skills (if it has any) won't auto-load. If a task is mostly about the theme side, start there instead.
+
+**Operator/dev machines only.** A client's Claude Code never starts from this folder and the client's machine never holds a copy of this plugin — client sessions run from a dedicated content folder, with a `--scope local` MCP entry (CLI path) or a `.mcp.json` from a kit built by `gnmcp-client-kit` (kit path). The client never needs SSH. See `docs/client-setup-claude-code.md`.
 
 ## Diagnosing a failed MCP connection
 

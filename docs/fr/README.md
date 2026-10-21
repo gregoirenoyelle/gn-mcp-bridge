@@ -235,7 +235,7 @@ Référence complète avec exemples pour chacun : [`CLAUDE.md`](../../CLAUDE.md)
 
 ## Ajouter une nouvelle ability
 
-Voir la section "Adding a new ability" dans [`CLAUDE.md`](../../CLAUDE.md). Démarrer Claude Code depuis le dossier de ce plugin pour ce travail — voir la note "Bundled skills" de `CLAUDE.md` pour le pourquoi. Valable uniquement sur la machine de dev de l'opérateur, jamais sur celle d'un client (voir « Configuration client : Claude Code » plus haut).
+Voir la section "Adding a new ability" dans [`CLAUDE.md`](../../CLAUDE.md). Démarrer Claude Code depuis le dossier de ce plugin pour ce travail — voir la note "Bundled skills" de `CLAUDE.md` pour le pourquoi. Idem pour une ability propre à un site, qui vit dans le thème consommateur : une session démarrée depuis le dossier du thème n'a pas le contexte du plugin et donne de mauvais résultats. Il faut donc démarrer depuis le dossier du plugin et éditer le fichier du thème par chemin absolu. Valable uniquement sur la machine de dev de l'opérateur, jamais sur celle d'un client (voir « Configuration client : Claude Code » plus haut).
 
 ## Développement
 

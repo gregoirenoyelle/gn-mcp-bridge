@@ -224,7 +224,7 @@ Full reference with examples for each: [`CLAUDE.md`](./CLAUDE.md).
 
 ## Adding a new ability
 
-See the "Adding a new ability" section in [`CLAUDE.md`](./CLAUDE.md). Start Claude Code from inside this plugin's own folder for that work — see `CLAUDE.md`'s "Bundled skills" note on why. This applies to the operator's dev machine only, never to a client's (see "Client setup: Claude Code" above).
+See the "Adding a new ability" section in [`CLAUDE.md`](./CLAUDE.md). Start Claude Code from inside this plugin's own folder for that work — see `CLAUDE.md`'s "Bundled skills" note on why. The same goes for a site-specific ability that lives in the consuming theme: a session started from the theme's folder lacks the plugin's context and produces poor results, so start from the plugin's folder and edit the theme file by absolute path. This applies to the operator's dev machine only, never to a client's (see "Client setup: Claude Code" above).
 
 ## Development
 

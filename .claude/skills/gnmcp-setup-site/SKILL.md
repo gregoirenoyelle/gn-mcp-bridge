@@ -101,7 +101,7 @@ Only add the functions/filters the dev actually asked for — don't scaffold unu
 - If reusing an existing account: `wp user application-password list <login> --path=<site>` to check what's already there.
 - If a new one is needed: `wp user application-password create <login> "<descriptive name — e.g. site + purpose>" --path=<site> --porcelain`.
 - Never print the raw password back into a committed file or into `CLAUDE.md`/`README.md` — it's a live secret. It only belongs in the client-side config (`claude mcp add --header`, or `claude_desktop_config.json` for the `mcp-remote` workaround — see `README.md`).
-- **If this site is synced locally via `wp-sync-db.sh` (see `gns-ssh-server`)**: a `pull` overwrites local `wp_usermeta`, wiping this Application Password and breaking the MCP connection with `401`. Check `.local-working/wp-sync.conf` for a `MCP_PRESERVE_USERS` entry covering `<login>` — add it if missing (`wp-sync-init.sh` leaves a commented template line for this in newly generated confs). See `README.md` "Known gotchas".
+- **If this site's local DB is pulled from prod**: a pull overwrites local `wp_usermeta`, wiping this Application Password and breaking the MCP connection with `401`. Make sure the sync process preserves `<login>`'s `_application_passwords` (maintainer setup: see `CLAUDE.dev.md` if present). See `README.md` "Known gotchas".
 
 ## Step 8 — Verify
 

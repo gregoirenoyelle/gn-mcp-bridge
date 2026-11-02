@@ -1,8 +1,10 @@
 # gn-mcp-bridge — Project Context for Claude
 
+@CLAUDE.dev.md
+
 ## ⚠️ FORBIDDEN on any site other than this one: editing this plugin's source
 
-This plugin is copied as-is across every Valet site. **This repo — `gregoirenoyelle` — is the canonical/dev copy.** Check which one you're in before touching `src/` or `gn-mcp-bridge.php`: the Valet site's folder name / domain (e.g. `wp option get siteurl --path=<site>`, or just the `SitesValet/<folder>` path). If it isn't `gregoirenoyelle`, you are in a deployment copy — plugin source is off-limits there, full stop, no exception.
+This plugin is copied as-is across every site the maintainer runs. **The copy on the `gregoirenoyelle` site is the canonical/dev copy.** Check which one you're in before touching `src/` or `gn-mcp-bridge.php`: the site's folder name / domain (e.g. `wp option get siteurl --path=<site>`). If it isn't `gregoirenoyelle`, you are in a deployment copy — plugin source is off-limits there, full stop, no exception.
 
 This has already almost happened once (a session on a deployment site confused "extend the plugin" with "extend the theme") — treat this as a hard rule, not a preference:
 
@@ -13,7 +15,7 @@ This has already almost happened once (a session on a deployment site confused "
 
 ## What this plugin does
 
-Exposes WordPress content abilities as an MCP server (`gn-mcp`) consumable by Claude Code over HTTP, authenticated via WordPress Application Passwords. Copiable as-is across Valet sites — per-site behavior is adjusted from the consuming theme via filters, never by editing this plugin.
+Exposes WordPress content abilities as an MCP server (`gn-mcp`) consumable by Claude Code over HTTP, authenticated via WordPress Application Passwords. Copiable as-is across sites — per-site behavior is adjusted from the consuming theme via filters, never by editing this plugin.
 
 ## File structure
 
@@ -146,7 +148,7 @@ A CPT-specific ability (e.g. hardcoding `recipe`-only fields not covered by the 
 
 `composer test` — pure unit tests, no WordPress install. `config.platform.php` is pinned to `8.2` (= the CI PHP version) so `composer.lock` resolves identically locally and on CI; never raise it above the CI version, and set it before any `composer update`.
 
-- Test pure logic (`Config`, `BlockLocator`, `PostTemplate`, `AdapterSource`) directly. Don't reference the `Server` class from a test: `src/Server.php` registers hooks at file scope (`add_filter`/`add_action` outside any function), so autoloading it needs the isolated `setUpBeforeClass()` Monkey cycle (see the `gns-wordpress-cicd` skill's `file-scope-hooks-detection.md`).
+- Test pure logic (`Config`, `BlockLocator`, `PostTemplate`, `AdapterSource`) directly. Don't reference the `Server` class from a test: `src/Server.php` registers hooks at file scope (`add_filter`/`add_action` outside any function), so autoloading it needs the isolated `setUpBeforeClass()` Monkey cycle.
 - Never load `gn-mcp-bridge.php` from tests — it exits on the `ABSPATH` guard and also registers hooks at file scope.
 - A new ability's `execute()` logic that can be unit-tested should get a `tests/Unit/<Name>Test.php` alongside it.
 
@@ -158,7 +160,7 @@ Split repos: `gregoirenoyelle/gn-mcp-bridge-source` (private — this repo, full
 2. Tag on `main` and push the tag (`git tag X.Y.Z && git push origin X.Y.Z`) — `release.yml` refuses a tag not on `main`, or one that doesn't match the `Version:` header.
 3. A dry run (`gh workflow run release.yml --ref main -f tag=X.Y.Z -f dry_run=true`) shows the staged tree and the diff against the public repo without pushing.
 
-Everything outside the `rsync` exclude list in `release.yml` ships publicly — including `CLAUDE.md` and `.claude/` (on purpose, the bundled skills must travel). Never put real logins, hostnames, or credentials in any shipped file. The deploy key is `DIST_REPO_DEPLOY_KEY` on the source repo (1Password `Dev` → `GitHub_Deploy_Key_gn_mcp_bridge`).
+Everything outside the `rsync` exclude list in `release.yml` ships publicly — including `CLAUDE.md` and `.claude/` (on purpose, the bundled skills must travel). Never put real logins, hostnames, or credentials in any shipped file. Maintainer-only notes (local setup, secrets location, personal tooling) go in `CLAUDE.dev.md`, which `release.yml` excludes.
 
 ## French documentation
 
@@ -170,7 +172,7 @@ Everything outside the `rsync` exclude list in `release.yml` ships publicly — 
 
 ## Bundled skills (`.claude/skills/`)
 
-Self-contained, `gnmcp-` prefixed skills that travel with this plugin when it's copied to another site (no dependency outside this plugin's own folder, unlike the personal `gns-` skill system in `~/.claude/skills/`):
+Self-contained, `gnmcp-` prefixed skills that travel with this plugin when it's copied to another site (no dependency outside this plugin's own folder, unlike personal skills installed in `~/.claude/skills/`):
 
 | Skill | Purpose |
 |---|---|
@@ -181,11 +183,9 @@ Self-contained, `gnmcp-` prefixed skills that travel with this plugin when it's 
 
 Auto-discovered by Claude Code when the working directory is inside this plugin. Keep this table in sync when a skill is added, renamed, or removed.
 
-## Related personal skill (referenced, not bundled)
+## Content editing across environments (not bundled)
 
-`gns-wordpress-blocks-wpcli` (`~/.claude/skills/gns-wordpress-blocks-wpcli/`) covers editing page/block `post_content` directly via WP-CLI, with a local → verify → prod workflow that uses this plugin's `gn-mcp/get-post`/`gn-mcp/update-post` abilities for the prod step (including the ID-is-not-portable-across-environments gotcha — local and prod `wp_block` IDs, and sometimes even slugs, never match for "the same" content; see that skill for the slug/page-ref resolution method).
-
-Deliberately **not** bundled here: it's a content-editing workflow, not plugin-setup tooling, and it isn't gn-mcp-bridge-specific — it works with plain WP-CLI alone. Whoever works on a client's site with this plugin needs it installed separately in their own `~/.claude/skills/`, same as any other personal skill — that's accepted, manual, per-developer setup, not something this plugin ships or automates.
+Editing page/block `post_content` (WP-CLI locally, then this plugin's `gn-mcp/get-post`/`gn-mcp/update-post` abilities for the prod step) is a content-editing workflow, not plugin-setup tooling, so no skill for it ships here. Gotcha: IDs are not portable across environments — local and prod `wp_block` IDs, and sometimes even slugs, never match for "the same" content. Resolve the real target on the destination environment before writing.
 
 ### `/gnmcp-start` (`.claude/commands/gnmcp-start.md`)
 
@@ -207,12 +207,6 @@ Session-opening health check, not a skill — plain slash command, no auto-disco
 
 ## Local DB pull wipes Application Passwords
 
-A prod → local DB pull (`wp-sync-db.sh pull`) replaces the local `wp_usermeta` table, which is where Application Passwords live (`_application_passwords`). Any local-only password — the one in `~/.claude.json` for a local `wp-mcp-*` server — is replaced by prod's value (usually none), and that MCP server starts returning `401`. Creating the password on prod first is not the fix: it would mean sharing one credential across environments.
+A prod → local DB pull replaces the local `wp_usermeta` table, which is where Application Passwords live (`_application_passwords`). Any local-only password — the one stored in your local MCP client config — is replaced by prod's value (usually none), and that MCP server starts returning `401`. Creating the password on prod first is not the fix: it would mean sharing one credential across environments.
 
-The fix is to list **every** login used by a local MCP server in `MCP_PRESERVE_USERS` in the site's `.local-working/wp-sync.conf` (space-separated). The script saves those users' passwords before the import and restores them after. A login left out of that list loses its password on every pull.
-
-```bash
-MCP_PRESERVE_USERS="<admin-login> <author-login>"
-```
-
-When adding a new local MCP server for another login (e.g. an Author-role test account), add that login to `MCP_PRESERVE_USERS` in the same step. A password already lost can't be recovered (only its hash was stored) — create a new one and update `~/.claude.json`.
+The fix is to back up the `_application_passwords` user meta of **every** login used by a local MCP server before the import and restore it after (your sync script should do this). A password already lost can't be recovered (only its hash was stored) — create a new one and update your MCP client config.

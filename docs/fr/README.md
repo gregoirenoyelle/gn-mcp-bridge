@@ -248,6 +248,10 @@ Les tests unitaires (`tests/Unit/`) tournent avec les mocks de fonctions WordPre
 
 Composer ne sert qu'aux outils de développement : le plugin charge ses classes via son propre `src/autoload.php`, donc `vendor/` n'est jamais nécessaire à l'exécution et n'est pas livré avec le plugin.
 
+### Evals
+
+Les abilities sont aussi testées de bout en bout, sur un vrai site WordPress avec deux identités de test, dans un dépôt public séparé : [gn-mcp-bridge-evals](https://github.com/gregoirenoyelle/gn-mcp-bridge-evals). Il vérifie que chaque ability exposée a un test, et contient des cas d'agent qui mesurent si un modèle choisit et appelle les bons outils.
+
 ## Licence
 
 GPL-2.0-or-later — voir [`LICENSE`](../../LICENSE).

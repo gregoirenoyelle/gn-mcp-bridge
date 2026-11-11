@@ -237,6 +237,10 @@ Unit tests (`tests/Unit/`) run against Brain Monkey WordPress function mocks —
 
 Composer is dev tooling only: the plugin loads its classes through its own `src/autoload.php`, so `vendor/` is never needed at runtime and is not shipped with the plugin.
 
+### Evals
+
+The abilities are also tested end to end, against a real WordPress site with two test identities, in a separate public repository: [gn-mcp-bridge-evals](https://github.com/gregoirenoyelle/gn-mcp-bridge-evals). It checks that every exposed ability has a test, and includes agent cases that measure whether a model picks and calls the right tools.
+
 ## License
 
 GPL-2.0-or-later — see [`LICENSE`](./LICENSE).
